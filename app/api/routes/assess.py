@@ -26,7 +26,7 @@ async def assess(req: AssessRequest, db: Session = Depends(get_db)):
 
     session_id = req.session_id or f"session_{datetime.utcnow().timestamp()}"
 
-    response_data, raw = process_assessment(prompt, session_id)
+    response_data, raw = await process_assessment(prompt, session_id)
 
     if raw:
         raise HTTPException(status_code=502, detail=f"LLM returned unparsable response: {raw}")

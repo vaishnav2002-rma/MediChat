@@ -1,29 +1,28 @@
-from datetime import datetime
-from app.services.gemini_client import call_gemini
+from app.services.langchain_client import run_assessment
 from app.models.assess_models import AssessResponse, Medication
 
-def process_assessment(prompt: str, session_id: str):
-    model_output = call_gemini(prompt)
 
-    if "diagnosis" not in model_output:
-        return None, model_output.get("raw")
+async def process_assessment(prompt: str, session_id: str):
+    model_output = await run_assessment(prompt)
+
+    if "error" in model_output:
+        return None, model_output["error"]
+
+    diagnosis = model_output.get("diagnosis")
+    medications_raw = model_output.get("medications", [])
+    precautions = model_output.get("precautions", [])
 
     medications = [
         Medication(
             name=m.get("name", "unknown"),
             dosage=m.get("dosage", "unspecified"),
             frequency=m.get("frequency", "unspecified"),
-            notes=m.get("notes", ""),
-        )
-        for m in model_output.get("medications", [])[:3]
+            notes=m.get("notes", "")
+        ) for m in medications_raw[:3]
     ]
 
-    precautions = model_output.get("precautions", [])
-    if not isinstance(precautions, list):
-        precautions = [precautions]
-
     return AssessResponse(
-        diagnosis=model_output.get("diagnosis", "unspecified"),
+        diagnosis=diagnosis,
         medications=medications,
         precautions=precautions,
         session_id=session_id,
