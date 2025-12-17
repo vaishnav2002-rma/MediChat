@@ -67,7 +67,7 @@ async def assess(req: AssessRequest, db: Session = Depends(get_db)):
         trace.update(
             output={
                 "diagnosis": response_data.diagnosis,
-                "medication_count": len(response_data.medication)
+                "medication_count": len(response_data.medications)
             },
             status="success"
         )

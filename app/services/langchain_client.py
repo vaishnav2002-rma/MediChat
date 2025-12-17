@@ -2,12 +2,20 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langfuse.callback import CallbackHandler 
+from pydantic import BaseModel
+from typing import List
+
 
 from app.core.config import settings
 from app.core.constants import SYSTEM_INSTRUCTION
-from app.models.assess_models import AssessResponse
+from app.models.assess_models import Medication 
 
 langfuse_handler = CallbackHandler()
+
+class LLMAssessmentOutput(BaseModel):
+    diagnosis: str 
+    medications: List[Medication]
+    precautions: List[str]
 
 # ----- Define LLM -----
 llm = ChatGoogleGenerativeAI(
@@ -18,7 +26,7 @@ llm = ChatGoogleGenerativeAI(
 )
 
 # ----- Define Output Parser -----
-parser = PydanticOutputParser(pydantic_object=AssessResponse)
+parser = PydanticOutputParser(pydantic_object=LLMAssessmentOutput)
 
 # ----- LangChain Prompt -----
 prompt = PromptTemplate(
