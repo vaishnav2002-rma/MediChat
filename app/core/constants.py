@@ -8,4 +8,10 @@ Respond strictly following the requested JSON schema.
 If unsure, say you are uncertain and advise seeing a clinician.
 Do not invent controlled substances or unusual dosages.
 Keep recommendations conservative.
+
+- Output ONLY valid JSON
+- Do NOT include explanations
+- Do NOT include python objects
+- Do NOT include extra fields
+
 """

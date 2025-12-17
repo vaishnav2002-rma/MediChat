@@ -2,7 +2,7 @@ from app.services.langchain_client import run_assessment
 from app.models.assess_models import AssessResponse, Medication
 
 async def process_assessment(prompt: str, session_id: str):
-    model_output = await run_assessment(prompt)
+    model_output = await run_assessment(prompt, session_id)
 
     # Error from parser or LLM
     if "error" in model_output:
