@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.models.hospital_models import AddressRequest, HospitalResponse, Hospital
 from app.services.hospital_service import (
-    geocode_address_with_gemini,
+    geocode_address,
     find_nearby_hospitals,
     calculate_distance,
     create_google_maps_link
@@ -12,13 +12,29 @@ router = APIRouter(prefix="/hospital", tags=["Hospital Finder"])
 
 @router.post("/find", response_model=HospitalResponse)
 async def find_hospitals(request: AddressRequest):
+    """
+    Find hospitals near the given address within the specified radius.
+    
+    - **address**: Your address in any format
+    - **radius_km**: Search radius in kilometers (default: 5km, max: 50km)
+    
+    Example Indian addresses:
+    - "Janapriya Metropolis, Motinagar, Erragadda, Hyderabad, Telangana"
+    - "Jubilee Hills, Hyderabad, Telangana"
+    - "Banjara Hills, Hyderabad"
+    - "MG Road, Bangalore, Karnataka"
+    
+    Example International addresses:
+    - "1600 Amphitheatre Parkway, Mountain View, CA, USA"
+    - "10 Downing Street, London, UK"
+    """
     try:
-        # Step 1: Geocode
-        location = await geocode_address_with_gemini(request.address)
+        # Step 1: Geocode the exact address
+        location = await geocode_address(request.address)
         lat = location["lat"]
         lon = location["lon"]
 
-        # Step 2: Query Overpass
+        # Step 2: Query Overpass for hospitals
         overpass = await find_nearby_hospitals(lat, lon, request.radius_km)
 
         hospitals = []
@@ -33,6 +49,8 @@ async def find_hospitals(request: AddressRequest):
                 continue
 
             distance = calculate_distance(lat, lon, hlat, hlon)
+            
+            # Strictly filter by radius
             if distance > request.radius_km:
                 continue
 
@@ -55,7 +73,7 @@ async def find_hospitals(request: AddressRequest):
                 )
             )
 
-        # Sort by nearest
+        # Sort by nearest first
         hospitals.sort(key=lambda h: h.distance_km)
 
         return HospitalResponse(
@@ -65,5 +83,7 @@ async def find_hospitals(request: AddressRequest):
             hospitals=hospitals
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Internal error: {e}")
