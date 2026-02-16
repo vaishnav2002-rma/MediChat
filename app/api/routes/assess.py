@@ -10,11 +10,11 @@ from app.services.assess_service import process_assessment
 from app.core.config import settings
 from app.core.langfuse_client import langfuse
 
-router = APIRouter(prefix="/assess", tags=["Assess"])
-
+router = APIRouter(prefix="/assess", tags=["Assess"])   
+                                      
 def get_db():
     db = SessionLocal()
-    try:
+    try:                             
         yield db
     finally:
         db.close()
@@ -43,8 +43,8 @@ async def assess(req: AssessRequest, db: Session = Depends(get_db)):
         response_data, raw = await process_assessment(prompt, session_id)
 
         if raw:
-            trace.update(
-                status_code=502, 
+            trace.update(           
+                status_code=502,     
                 error="Unparsable LLM response"
             )
             raise HTTPException(

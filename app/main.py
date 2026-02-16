@@ -5,6 +5,7 @@ from app.api.routes.hospital_finder import router as hospital_router
 
 from app.db.database import Base, engine
 
+from app.api.routes.assess_langgraph import router as langgraph_router
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -16,6 +17,8 @@ app.include_router(history_router)
 
 # NEW Hospital Finder Router
 app.include_router(hospital_router)
+app.include_router(langgraph_router)
+
 
 @app.get("/health")
 def health():

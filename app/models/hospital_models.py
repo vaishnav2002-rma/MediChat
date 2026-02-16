@@ -10,8 +10,8 @@ class Hospital(BaseModel):
     address: Optional[str] = None
     distance_km: float
     latitude: float
-    longitude: float
-    google_maps_link: str
+    longitude: float                
+    google_maps_link: str           
     phone: Optional[str] = None
     emergency: Optional[str] = None
 
@@ -19,4 +19,4 @@ class HospitalResponse(BaseModel):
     origin_address: str
     origin_coordinates: dict
     total_hospitals_found: int
-    hospitals: List[Hospital]
+    hospitals: List[Hospital]       

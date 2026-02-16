@@ -30,18 +30,20 @@ def diagnosis_node(state: MedicalState):
     )
 
     try:
-        symptoms = state["cleaned_symptoms"]
+        symptoms = state.get("symptoms", "")
 
         prompt = f"""
     Based on the symptoms: "{symptoms}"
     Provide ONLY the most likely diagnosis in one sentence.
     """
 
-        result = llm.invoke(prompt).text
+        result = llm.invoke(prompt).content
         state["diagnosis"] = result
+        trace.end(status="success")
         return state
     except Exception as e:
-        trace.end()
+        trace.end(status="error", error=str(e))
+        raise
 
 
 # -------------------------
@@ -50,7 +52,7 @@ def diagnosis_node(state: MedicalState):
 def medication_node(state: MedicalState):
     trace = langfuse.trace(
         name="medication_node",
-        metadata={"node": "diagnosis"}
+        metadata={"node": "medications"}
     )
 
     try:
@@ -70,7 +72,7 @@ def medication_node(state: MedicalState):
     ]
     """
 
-        response = llm.invoke(prompt).text
+        response = llm.invoke(prompt).content
 
         # best-effort JSON extraction
         import json
@@ -80,6 +82,7 @@ def medication_node(state: MedicalState):
             meds = []
 
         state["medications"] = meds
+        trace.end(status="success")
         return state
     except Exception as e:
         trace.end(status="error", error=str(e))
@@ -92,7 +95,7 @@ def medication_node(state: MedicalState):
 def precautions_node(state: MedicalState):
     trace = langfuse.trace(
         name="precautions_node",
-        metadata={"node": "diagnosis"}
+        metadata={"node": "precautions"}
     )
 
     try:
@@ -104,10 +107,11 @@ def precautions_node(state: MedicalState):
     List 3–5 important precautions or red flags as bullet points (no extra text).
     """
 
-        response = llm.invoke(prompt).text
+        response = llm.invoke(prompt).content
         precautions = [line.strip("- ").strip() for line in response.split("\n") if line.strip()]
 
         state["precautions"] = precautions
+        trace.end(status="success")
         return state
     except Exception as e:
         trace.end(status="error", error=str(e))
@@ -120,7 +124,7 @@ def precautions_node(state: MedicalState):
 def summary_node(state: MedicalState):
     trace = langfuse.trace(
         name="summary_node",
-        metadata={"node": "diagnosis"}
+        metadata={"node": "summary"}
     )
 
     try:
@@ -130,6 +134,7 @@ def summary_node(state: MedicalState):
     Precautions: {state['precautions']}
     """
         state["summary"] = summary.strip()
+        trace.end(status="success")
         return state
     except Exception as e:
         trace.end(status="error", error=str(e))
@@ -146,8 +151,7 @@ workflow.add_node("medications", medication_node)
 workflow.add_node("precautions", precautions_node)
 workflow.add_node("summary", summary_node)
 
-workflow.set_entry_point("clean_symptoms")
-workflow.add_edge("clean_symptoms", "diagnosis")
+workflow.set_entry_point("diagnosis")
 workflow.add_edge("diagnosis", "medications")
 workflow.add_edge("medications", "precautions")
 workflow.add_edge("precautions", "summary")
